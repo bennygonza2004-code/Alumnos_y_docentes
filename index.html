@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Alumnos y Catedráticos</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      font-family: 'Segoe UI', sans-serif;
+      padding: 30px;
+      color: #fff;
+    }
+    h1 {
+      text-align: center;
+      color: #f39c12;
+    }
+    .section {
+      background: #ecf0f1;
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      margin-bottom: 30px;
+      padding: 20px;
+      color: #2c3e50;
+      transition: transform 0.3s ease;
+    }
+    .section:hover {
+      transform: scale(1.02);
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    select, textarea, input, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #e67e22;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #ca640f;
+    }
+    .response {
+      white-space: pre-wrap;
+      background: #fff;
+      padding: 15px;
+      border-left: 5px solid #e67e22;
+      border-radius: 8px;
+      color: #333;
+    }
+    .url-header {
+      font-size: 0.95rem;
+      color: #333;
+      background: #fdf6e3;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Prueba de API Alumnos y Catedráticos</h1>
+
+  <div class="section">
+    <label for="tipo">Selecciona tipo:</label>
+    <select id="tipo" onchange="cambiarTipo()">
+      <option value="alumno">Alumno</option>
+      <option value="catedratico">Catedrático</option>
+    </select>
+  </div>
+
+  <div class="section">
+    <h2>POST - Agregar</h2>
+    <div class="url-header" id="url-post">POST → http://localhost/Alumnos_y_docentes/index.php?tipo=alumno</div>
+    <textarea id="postData"></textarea>
+    <button onclick="enviar('POST')">Enviar POST</button>
+  </div>
+
+  <div class="section">
+    <h2>GET - Consultar</h2>
+    <div class="url-header" id="url-get">GET → http://localhost/Alumnos_y_docentes/index.php?tipo=alumno</div>
+    <button onclick="enviar('GET')">Enviar GET</button>
+  </div>
+
+  <div class="section">
+    <h2>PUT - Actualizar</h2>
+    <div class="url-header" id="url-put">PUT → http://localhost/Alumnos_y_docentes/index.php?tipo=alumno</div>
+    <textarea id="putData"></textarea>
+    <button onclick="enviar('PUT')">Enviar PUT</button>
+  </div>
+
+  <div class="section">
+    <h2>DELETE - Eliminar</h2>
+    <div class="url-header" id="url-delete">DELETE → http://localhost/Alumnos_y_docentes/index.php?tipo=alumno</div>
+    <input id="deleteId" placeholder="ID a eliminar">
+    <button onclick="enviar('DELETE')">Enviar DELETE</button>
+  </div>
+
+  <div class="section">
+    <h2>Respuesta</h2>
+    <div class="response" id="response"></div>
+  </div>
+
+  <script>
+    function cambiarTipo() {
+      const tipo = document.getElementById('tipo').value;
+      document.getElementById('url-post').textContent = `POST → http://localhost/Alumnos_y_docentes/index.php?tipo=${tipo}`;
+      document.getElementById('url-get').textContent = `GET → http://localhost/Alumnos_y_docentes/index.php?tipo=${tipo}`;
+      document.getElementById('url-put').textContent = `PUT → http://localhost/Alumnos_y_docentes/index.php?tipo=${tipo}`;
+      document.getElementById('url-delete').textContent = `DELETE → http://localhost/Alumnos_y_docentes/index.php?tipo=${tipo}`;
+
+      document.getElementById('postData').value = tipo === 'alumno'
+        ? JSON.stringify({ nombre: "Juan Pérez", carnet: "A123", carrera: "Ingeniería", fecha_ingreso: "2025-08-01" }, null, 2)
+        : JSON.stringify({ nombre: "Lic. Pedro", especialidad: "Matemática", correo: "pedro@uspg.edu.gt" }, null, 2);
+
+      document.getElementById('putData').value = tipo === 'alumno'
+        ? JSON.stringify({ id: 1, nombre: "Juan Modificado", carnet: "A123", carrera: "Sistemas", fecha_ingreso: "2025-08-02" }, null, 2)
+        : JSON.stringify({ id: 1, nombre: "Lic. Pedro M.", especialidad: "Física", correo: "pedro.m@uspg.edu.gt" }, null, 2);
+    }
+
+    async function enviar(metodo) {
+      const tipo = document.getElementById('tipo').value;
+      const url = `http://localhost/Alumnos_y_docentes/index.php?tipo=${tipo}`;
+      let opciones = { method: metodo, headers: { 'Content-Type': 'application/json' } };
+
+      if (metodo === 'POST') {
+        opciones.body = document.getElementById('postData').value;
+      } else if (metodo === 'PUT') {
+        opciones.body = document.getElementById('putData').value;
+      } else if (metodo === 'DELETE') {
+        opciones.body = JSON.stringify({ id: parseInt(document.getElementById('deleteId').value) });
+      }
+
+      const res = await fetch(url, opciones);
+      const data = await res.json();
+      document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+    }
+
+    cambiarTipo();
+  </script>
+</body>
+</html>
