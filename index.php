@@ -1,32 +1,28 @@
 <?php
-// Encabezados CORS
-header("Content-Type: application/json");
+// CORS
+header("Content-Type: application/json; charset=utf-8");
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-// Cargar archivos con rutas reales según nombres de carpetas
-require_once realpath(__DIR__ . '/Config/conexion.php');
-require_once realpath(__DIR__ . '/Controles/AlumnoController.php');
-require_once realpath(__DIR__ . '/Controles/CatedraticoController.php');
+// Preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
 
-// Obtener conexión
+// Carga núcleo
+require_once __DIR__ . '/Config/conexion.php';
+require_once __DIR__ . '/Core/Container.php';
+require_once __DIR__ . '/Core/Router.php';
+
 $conexion = getConexion();
+$container = new Container($conexion);
+$router    = new Router($container);
 
-// Método, tipo y datos
+// Entrada
 $method = $_SERVER['REQUEST_METHOD'];
-$tipo = $_GET['tipo'] ?? '';
-$data = json_decode(file_get_contents("php://input"), true);
+$tipo   = $_GET['tipo'] ?? '';
+$raw    = file_get_contents("php://input");
+$data   = json_decode($raw ?: "[]", true);
 
-// Enrutar según tipo
-if ($tipo === 'alumno') {
-    $controller = new AlumnoController($conexion);
-    $resultado = $controller->manejar($method, $data);
-    echo json_encode($resultado);
-} elseif ($tipo === 'catedratico') {
-    $controller = new CatedraticoController($conexion);
-    $resultado = $controller->manejar($method, $data);
-    echo json_encode($resultado);
-} else {
-    echo json_encode(["error" => "Parámetro 'tipo' no válido"]);
-}
+// Despacho
+$result = $router->dispatch($tipo, $method, $data);
+echo json_encode($result, JSON_UNESCAPED_UNICODE);

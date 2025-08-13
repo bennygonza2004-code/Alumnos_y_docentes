@@ -1,9 +1,15 @@
 <?php
-class AlumnoService {
-    private $repo;
+require_once __DIR__ . '/../Interfaces/ServiceInterfaces.php';
+require_once __DIR__ . '/../Interfaces/RepositoryInterfaces.php';
+require_once __DIR__ . '/../Validadores/AlumnoValidator.php';
 
-    public function __construct($repo) {
+class AlumnoService implements AlumnoServiceInterface {
+    private $repo;      // AlumnoRepositoryInterface
+    private $validator; // AlumnoValidator
+
+    public function __construct(AlumnoRepositoryInterface $repo, AlumnoValidator $validator) {
         $this->repo = $repo;
+        $this->validator = $validator;
     }
 
     public function obtenerAlumnos() {
@@ -11,24 +17,22 @@ class AlumnoService {
     }
 
     public function agregarAlumnos($data) {
-        $alumnos = isset($data[0]) ? $data : [$data];
-        foreach ($alumnos as $alumno) {
-            if (!isset($alumno['nombre'], $alumno['carnet'], $alumno['carrera'], $alumno['fecha_ingreso'])) {
-                return false;
-            }
-            $this->repo->insertar($alumno);
+        $lista = isset($data[0]) ? $data : [$data];
+        foreach ($lista as $a) {
+            $errores = $this->validator->validateCreate($a);
+            if ($errores) return ["success" => false, "errores" => $errores];
+            if (!$this->repo->insertar($a)) return ["success" => false];
         }
-        return true;
+        return ["success" => true];
     }
 
-    public function actualizarAlumno($alumno) {
-        if (!isset($alumno['id'], $alumno['nombre'], $alumno['carnet'], $alumno['carrera'], $alumno['fecha_ingreso'])) {
-            return false;
-        }
-        return $this->repo->actualizar($alumno);
+    public function actualizarAlumno($a) {
+        $errores = $this->validator->validateUpdate($a);
+        if ($errores) return ["success" => false, "errores" => $errores];
+        return ["success" => (bool)$this->repo->actualizar($a)];
     }
 
     public function eliminarAlumno($id) {
-        return $this->repo->eliminar($id);
+        return ["success" => (bool)$this->repo->eliminar($id)];
     }
 }

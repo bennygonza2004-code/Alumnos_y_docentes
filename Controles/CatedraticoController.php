@@ -1,30 +1,22 @@
 <?php
-// Rutas ajustadas a tu estructura personalizada
-require_once __DIR__ . '/../Servicio/CatedraticoService.php';
-require_once __DIR__ . '/../Repositorio/CatedraticoRepository.php';
+require_once __DIR__ . '/../Interfaces/ServiceInterfaces.php';
 
 class CatedraticoController {
-    private $servicio;
+    private $servicio; // CatedraticoServiceInterface
 
-    // Constructor: inyecta dependencias usando el repositorio
-    public function __construct($conexion) {
-        $repositorio = new CatedraticoRepository($conexion);
-        $this->servicio = new CatedraticoService($repositorio);
+    public function __construct(CatedraticoServiceInterface $servicio) {
+        $this->servicio = $servicio;
     }
 
-    // Enrutamiento del método HTTP
     public function manejar($method, $data) {
         switch ($method) {
-            case 'GET':
-                return $this->servicio->obtenerCatedraticos();
-            case 'POST':
-                return ["success" => $this->servicio->agregarCatedraticos($data)];
-            case 'PUT':
-                return ["success" => $this->servicio->actualizarCatedratico($data)];
-            case 'DELETE':
-                return isset($data['id']) ? ["success" => $this->servicio->eliminarCatedratico($data['id'])] : ["error" => "ID no proporcionado"];
-            default:
-                return ["error" => "Método no soportado"];
+            case 'GET':    return $this->servicio->obtenerCatedraticos();
+            case 'POST':   return $this->servicio->agregarCatedraticos($data ?? []);
+            case 'PUT':    return $this->servicio->actualizarCatedratico($data ?? []);
+            case 'DELETE': return isset($data['id'])
+                                ? $this->servicio->eliminarCatedratico((int)$data['id'])
+                                : ["success" => false, "errores" => ["ID no proporcionado"]];
+            default:       return ["error" => "Método no soportado"];
         }
     }
 }

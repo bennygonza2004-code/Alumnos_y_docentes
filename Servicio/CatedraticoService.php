@@ -1,9 +1,15 @@
 <?php
-class CatedraticoService {
-    private $repo;
+require_once __DIR__ . '/../Interfaces/ServiceInterfaces.php';
+require_once __DIR__ . '/../Interfaces/RepositoryInterfaces.php';
+require_once __DIR__ . '/../Validadores/CatedraticoValidator.php';
 
-    public function __construct($repo) {
+class CatedraticoService implements CatedraticoServiceInterface {
+    private $repo;      // CatedraticoRepositoryInterface
+    private $validator; // CatedraticoValidator
+
+    public function __construct(CatedraticoRepositoryInterface $repo, CatedraticoValidator $validator) {
         $this->repo = $repo;
+        $this->validator = $validator;
     }
 
     public function obtenerCatedraticos() {
@@ -11,24 +17,22 @@ class CatedraticoService {
     }
 
     public function agregarCatedraticos($data) {
-        $catedraticos = isset($data[0]) ? $data : [$data];
-        foreach ($catedraticos as $cat) {
-            if (!isset($cat['nombre'], $cat['especialidad'], $cat['correo'])) {
-                return false;
-            }
-            $this->repo->insertar($cat);
+        $lista = isset($data[0]) ? $data : [$data];
+        foreach ($lista as $c) {
+            $errores = $this->validator->validateCreate($c);
+            if ($errores) return ["success" => false, "errores" => $errores];
+            if (!$this->repo->insertar($c)) return ["success" => false];
         }
-        return true;
+        return ["success" => true];
     }
 
-    public function actualizarCatedratico($cat) {
-        if (!isset($cat['id'], $cat['nombre'], $cat['especialidad'], $cat['correo'])) {
-            return false;
-        }
-        return $this->repo->actualizar($cat);
+    public function actualizarCatedratico($c) {
+        $errores = $this->validator->validateUpdate($c);
+        if ($errores) return ["success" => false, "errores" => $errores];
+        return ["success" => (bool)$this->repo->actualizar($c)];
     }
 
     public function eliminarCatedratico($id) {
-        return $this->repo->eliminar($id);
+        return ["success" => (bool)$this->repo->eliminar($id)];
     }
 }
